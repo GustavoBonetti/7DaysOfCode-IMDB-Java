@@ -2,35 +2,47 @@ package com.company;
 
 import io.github.cdimascio.dotenv.Dotenv;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 public class Main {
 
     public static void main(String[] args) {
         Dotenv dotenv = Dotenv.load();
-        String imdbKey = dotenv.get("IMDB_KEY");
-
-        HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = null;
-        try {
-            request = HttpRequest
-                    .newBuilder()
-                    .uri(new URI("https://imdb-api.com/en/API/Top250Movies/" + imdbKey))
-                    .GET()
-                    .build();
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
+        String imdbApiUrl = dotenv.get("IMDB_API_URL");
 
         try {
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            System.out.println(response.body());
-        } catch (IOException | InterruptedException e) {
+            // Create a URL object with the target URL
+            URL url = new URL(imdbApiUrl + "search?query=teste");
+
+            // Open a connection to the URL
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+            // Set the HTTP request method to GET
+            connection.setRequestMethod("GET");
+
+            // Get the response code (HTTP status)
+            int responseCode = connection.getResponseCode();
+            System.out.println("Response Code: " + responseCode);
+
+            // Read the response from the server
+            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            String line;
+            StringBuilder response = new StringBuilder();
+
+            while ((line = reader.readLine()) != null) {
+                response.append(line);
+            }
+            reader.close();
+
+            // Print the response
+            System.out.println("Response:\n" + response);
+
+            // Close the connection
+            connection.disconnect();
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
